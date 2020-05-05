@@ -688,20 +688,33 @@ class ModelField(Representation):
         else:
             return result, None
 
+    def _get_matching_type_sub_field(self, value: Any) -> Any:
+        if self.sub_fields:  # otherwise linter freaks out
+            for field in self.sub_fields:
+                if isinstance(value, field.type_):
+                    return field
+        return
+
     def _validate_singleton(
         self, v: Any, values: Dict[str, Any], loc: 'LocStr', cls: Optional['ModelOrDc']
     ) -> 'ValidateReturn':
-        if self.sub_fields:
-            errors = []
-            for field in self.sub_fields:
-                value, error = field.validate(v, values, loc=loc, cls=cls)
-                if error:
-                    errors.append(error)
-                else:
-                    return value, None
-            return v, errors
-        else:
+        if not self.sub_fields:
             return self._apply_validators(v, values, loc, cls, self.validators)
+
+        fields_to_check_against = self.sub_fields
+        if not self.model_config.priority_conversion:
+            field = self._get_matching_type_sub_field(v)
+            if field:
+                fields_to_check_against = [field]
+
+        errors = []
+        for field in fields_to_check_against:
+            value, error = field.validate(v, values, loc=loc, cls=cls)
+            if error:
+                errors.append(error)
+            else:
+                return value, None
+        return v, errors
 
     def _apply_validators(
         self, v: Any, values: Dict[str, Any], loc: 'LocStr', cls: Optional['ModelOrDc'], validators: 'ValidatorsList'

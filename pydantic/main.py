@@ -106,6 +106,7 @@ class BaseConfig:
     json_loads: Callable[[str], Any] = json.loads
     json_dumps: Callable[..., str] = json.dumps
     json_encoders: Dict[AnyType, AnyCallable] = {}
+    priority_conversion: bool = True
 
     @classmethod
     def get_field_info(cls, name: str) -> Dict[str, Any]:

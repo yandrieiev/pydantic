@@ -88,7 +88,6 @@ def test_union_priority():
     assert ModelTwo(v='123').v == '123'
 
 
-@pytest.mark.xfail(reason='Prioritization results in data loss', raises=AttributeError, strict=True)
 def test_union_priority_data_loss():
     class Person(BaseModel):
         name: str
@@ -98,6 +97,9 @@ def test_union_priority_data_loss():
         name: str
 
     class Container(BaseModel):
+        class Config:
+            priority_conversion = False
+
         v: Union[NamedThing, Person] = ...
 
     container = Container(v=Person(name='Name', last_name='Last Name'))
@@ -601,6 +603,7 @@ def test_inheritance():
 
 def test_invalid_type():
     with pytest.raises(RuntimeError) as exc_info:
+
         class Model(BaseModel):
             x: 43 = 123
 
@@ -698,6 +701,7 @@ def test_annotation_inheritance():
     assert C.__fields__['integer'].type_ == str
 
     with pytest.raises(TypeError) as exc_info:
+
         class D(A):
             integer = 'G'
 
@@ -773,6 +777,7 @@ def test_invalid_validator():
             pass
 
     with pytest.raises(errors.ConfigError) as exc_info:
+
         class InvalidValidatorModel(BaseModel):
             x: InvalidValidator = ...
 
@@ -781,6 +786,7 @@ def test_invalid_validator():
 
 def test_unable_to_infer():
     with pytest.raises(errors.ConfigError) as exc_info:
+
         class InvalidDefinitionModel(BaseModel):
             x = None
 
@@ -831,6 +837,7 @@ def test_force_extra():
 
 def test_illegal_extra_value():
     with pytest.raises(ValueError, match='is not a valid value for "extra"'):
+
         class Model(BaseModel):
             foo: int
 
@@ -1050,6 +1057,7 @@ def test_not_optional_subfields():
 
 def test_scheme_deprecated():
     with pytest.warns(DeprecationWarning, match='`Schema` is deprecated, use `Field` instead'):
+
         class Model(BaseModel):
             foo: int = Schema(4)
 
@@ -1514,6 +1522,7 @@ def test_custom_generic_disallowed():
 
     match = r'Fields of type(.*)are not supported.'
     with pytest.raises(TypeError, match=match):
+
         class Model(BaseModel):
             a: str
             gen: MyGen[str, bool]
